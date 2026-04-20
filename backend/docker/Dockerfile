@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:20 AS builder
 
 WORKDIR /app
 
@@ -7,8 +7,17 @@ RUN npm install
 
 COPY . .
 
+RUN npm run build
 RUN npx prisma generate
 
-EXPOSE 5000
+# -------- RUN STAGE --------
+FROM node:20
 
-CMD ["npm", "run", "dev"]
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+
+CMD ["node", "dist/server.js"]
