@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  image: postgres:15
+  container_name: event-db
+  restart: unless-stopped
+  environment:
+    POSTGRES_USER: user
+    POSTGRES_PASSWORD: password
+    POSTGRES_DB: events
+  ports:
+    - "5423:5432"
+  volumes:
+    - postgres_date:/var/lib/postgresql/data
+  networks:
+    - app-network
+
+  backend:
+    build:
+      context: ..
+      container_name: event-backend
+      restart: unless-stopped
+      ports:
+        - "5000:5000"
+      env_file:
+        - ../.env
+      depends_on:
+        - postgres
+      volumes:
+        - ..:/app
+        - /app/node_modules
+      command: npm run dev
+      networks:
+        - app-network
+  
+  volumes:
+    postgres_data:
+
+  networks:
+    app-network:
+      driver: bridge
